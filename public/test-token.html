@@ -1,0 +1,86 @@
+<html>
+
+<head>
+    <title>Heimdall Element Provisioning</title>
+    <meta http-equiv="Cache-Control" content="no-store" />
+<script
+  src="https://code.jquery.com/jquery-3.4.1.min.js"
+  integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+  crossorigin="anonymous"></script></head>
+<script>
+    $(document).ready(function () {
+        //load script via url param if available
+        const params = new URLSearchParams(document.location.search);
+        const env = params.get("env") ? params.get("env") : "stg"
+        loadHeimdallScript(env)
+        document.getElementById('scriptEnv').value = env
+    });
+
+    const loadHeimdallScript = (envIndex) => {
+        const domains = {
+            "loc": "https://via.ngrok.io",
+            "stg": "https://heimdall-staging.cloud-elements.com",
+            "prd": "https://heimdall.cloud-elements.com",
+            "euprd": "https://heimdall.cloud-elements.co.uk"
+        }
+
+        let script = document.createElement('script');
+        script.src = `${domains[envIndex]}/v1/public/javascripts/heimdall-sdk.js`
+        script.async = false;
+        document.head.appendChild(script);
+    }
+</script>
+
+<body>
+    <script>
+        let count = 0;
+        const createNode = (msg) => {
+            let li = document.createElement('li')
+            li.appendChild(document.createTextNode(msg))
+            return li
+        }
+        const statusMessge = (s) => `Message: ${s.message} ${s.providerMessage ? (", Provider Message: " + s.providerMessage) : ''} ${s.requestId ? ", RequestId: " + s.requestId : ''}`
+        const instanceMessage = (s) => `Id: ${s.id}, Name: ${s.name}`
+        const callback = (result) => {
+            count++
+            //look for event
+            if (result.message) {
+                let newMsg = createNode(statusMessge(result))
+                document.getElementById('payload').appendChild(newMsg)
+            } 
+            //load result
+            else {
+                 let newMsg = createNode(instanceMessage(result))
+                 document.getElementById('payload').appendChild(newMsg)
+            }
+        }
+
+        // use heimdall
+        const create = () => {
+            CE.createInstance({
+                token: document.getElementsByName('token')[0].value
+            }, callback)
+        }
+    </script>
+
+    <h3>Heimdall - Element Provisioning</h3>
+    <strong>environment: </strong>
+    <select id="scriptEnv" onchange="loadHeimdallScript(this.value)">
+        <option value="loc">via.ngrok.io</option>
+        <option value="stg">heimdall-staging.cloud-elements.com</option>
+        <option value="prd">heimdall.cloud-elements.com</option>
+        <option value="euprd">heimdall.cloud-elements.co.uk</option>
+    </select>
+    <br>
+    <br>
+    <strong>token: </strong>
+    <input type="text" name="token" size="100">
+    <br>
+    <br>
+    <button onclick="create()"><strong>Load Heimdall Form</strong></button>
+    <div>
+        <ol id="payload"></ol>
+    </div>
+</body>
+
+</html>
